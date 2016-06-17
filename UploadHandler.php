@@ -1103,15 +1103,16 @@ class UploadHandler {
 		$index = null, $content_range = null
 	) {
 		$file       = new \stdClass();
-		$file->name = $this->get_file_name( $uploaded_file, $name, $size, $type, $error,
-			$index, $content_range );
+		//$file->name = $this->get_file_name( $uploaded_file, $name, $size, $type, $error,
+		//	$index, $content_range );
+		$file->name = $name;
 		$file->size = $this->fix_integer_overflow( intval( $size ) );
 		$file->type = $type;
 		if ( $this->validate( $uploaded_file, $file, $error, $index ) ) {
 			$this->handle_form_data( $file, $index );
 			$upload_dir = $this->get_upload_path();
 			if ( ! is_dir( $upload_dir ) ) {
-				$test = mkdir( $upload_dir, $this->options['mkdir_mode'], true );
+				mkdir( $upload_dir, $this->options['mkdir_mode'], true );
 			}
 			$file_path   = $this->get_upload_path( $file->name );
 			$append_file = $content_range && is_file( $file_path ) &&
@@ -1136,6 +1137,7 @@ class UploadHandler {
 				);
 			}
 			$file_size = $this->get_file_size( $file_path, $append_file );
+			//echo $file_size;
 			if ( $file_size === $file->size ) {
 				$file->url = $this->get_download_url( $file->name );
 				if ( $this->is_valid_image_file( $file_path ) ) {

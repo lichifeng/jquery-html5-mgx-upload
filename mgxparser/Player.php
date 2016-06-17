@@ -107,6 +107,8 @@ class Player
      * @var InitialState
      */
     public $initialState;
+    
+    public $civString;
 
     /**
      * Class constructor.
@@ -132,8 +134,9 @@ class Player
      */
     public function getCivString()
     {
-        return isset(RecAnalystConst::$CIVS[$this->civId][0]) ?
+        $this->civString = isset(RecAnalystConst::$CIVS[$this->civId][0]) ?
             RecAnalystConst::$CIVS[$this->civId] : '';
+        return $this->civString;
     }
 
     /**

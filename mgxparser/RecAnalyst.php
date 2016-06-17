@@ -2512,9 +2512,14 @@ class RecAnalyst
         return $this->bodyStream->getDataString();
     }
 
-    public function getOutput($map_img, $research_img, $qr_img) {
+    public function getOutput() {
+        foreach ($this->players as $player) {
+            $player->getCivString();
+        }
+        foreach ($this->playersByIndex as $player) {
+            $player->getCivString();
+        }
         return array(
-            'map_url'      => $map_img,
             'version'      => $this->gameInfo->getGameVersionString(),
             'nVSn'         => $this->gameInfo->getPlayersString(),
             'speed'        => $this->gameSettings->getGameSpeedString(),
@@ -2537,6 +2542,7 @@ class RecAnalyst
             'team'         => $this->teams,
             'pregameChat'  => $this->pregameChat,
             'ingameChat'   => $this->ingameChat,
+            'units'         => $this->units, 
         );
     }
 }
