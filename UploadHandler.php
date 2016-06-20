@@ -61,7 +61,7 @@ class UploadHandler {
 				'POST',
 				'PUT',
 				'PATCH',
-				'DELETE'
+				//'DELETE'
 			),
 			'access_control_allow_headers'     => array(
 				'Content-Type',
@@ -1100,7 +1100,7 @@ class UploadHandler {
 
 	protected function handle_file_upload(
 		$uploaded_file, $name, $size, $type, $error,
-		$index = null, $content_range = null
+		$index = null, $content_range = null, $host_url = null
 	) {
 		$file       = new \stdClass();
 		//$file->name = $this->get_file_name( $uploaded_file, $name, $size, $type, $error,
@@ -1108,6 +1108,7 @@ class UploadHandler {
 		$file->name = $name;
 		$file->size = $this->fix_integer_overflow( intval( $size ) );
 		$file->type = $type;
+		$file->host_url = $host_url;
 		if ( $this->validate( $uploaded_file, $file, $error, $index ) ) {
 			$this->handle_form_data( $file, $index );
 			$upload_dir = $this->get_upload_path();

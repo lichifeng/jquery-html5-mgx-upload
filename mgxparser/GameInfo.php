@@ -130,6 +130,21 @@ class GameInfo
      *
      * @return string
      */
+    public function getPOVID()
+    {
+        foreach ($this->owner->players as $player) {
+            if ($player->owner) {
+                return $player->index;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Returns the point of view.
+     *
+     * @return string
+     */
     public function getPOV()
     {
         foreach ($this->owner->players as $player) {

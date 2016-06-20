@@ -21,9 +21,9 @@ register_activation_hook( __FILE__, 'jquery_html5_file_upload_install' );
 register_deactivation_hook( __FILE__, 'jquery_html5_file_upload_remove' );
 
 function jquery_html5_file_upload_install() {
-	add_option( "jqhfu_accepted_file_types", 'gif|jpeg|jpg|png', '', 'yes' );
-	add_option( "jqhfu_inline_file_types", 'gif|jpeg|jpg|png', '', 'yes' );
-	add_option( "jqhfu_maximum_file_size", '5', '', 'yes' );
+	add_option( "jqhfu_accepted_file_types", 'mgx|mgx2|mgl|mgz|msx|msx2', '', 'yes' );
+	add_option( "jqhfu_inline_file_types", 'mgx|mgx2|mgl|mgz|msx|msx2', '', 'yes' );
+	add_option( "jqhfu_maximum_file_size", '10', '', 'yes' );
 	add_option( "jqhfu_thumbnail_width", '80', '', 'yes' );
 	add_option( "jqhfu_thumbnail_height", '80', '', 'yes' );
 
@@ -279,13 +279,14 @@ class RecordUploadHandler extends UploadHandler {
 		{
 			$player_code = $p->owner ? $p->index : $player_code;
 		}
-		$name_string = 'Ymd_' . $mgx_analyzer->gameInfo->getPlayersString() . '_' . $player_code .  'P_' . substr($md5,0,5);
-		$new_name    = date( $name_string, filemtime( $uploaded_file ) ) . '.';
+		$name_string = 'Ymd_';
+		$new_name    = date( $name_string, filemtime( $uploaded_file ) ) . $mgx_analyzer->gameInfo->getPlayersString() . '_' . $player_code .  'P_' . substr($md5,0,8) . '.';
 
 		return [
 			$new_name . strtolower( pathinfo( $name, PATHINFO_EXTENSION ) ),
 			$new_name . 'png',
-			$player_code . 'P_md5'
+			$player_code . 'P_md5',
+            $player_code . 'P_mgx'
 		];
 	}
 
@@ -316,23 +317,31 @@ class RecordUploadHandler extends UploadHandler {
 			$r = new \RecAnalyst\RecAnalyst();
 			$r->load( $name, fopen( $uploaded_file, 'r' ) );
 			if ( ! $r->analyze() ) {
-				return $file_obj->error = $this->get_error_message( 'accept_file_types' );
+				$file_obj->error = $this->get_error_message( 'accept_file_types' );
+				return $file_obj;
 			}
 
 			$file_md5 = md5_file( $uploaded_file );
+
+            $POV_ID = $r->gameInfo->getPOVID() == 0 ? false : $r->gameInfo->getPOVID();
+            if ( $POV_ID == false ) {
+                $file_obj->error = 'Player ID out of range, check if this is a valid AoC record. ';
+                return $file_obj;
+            }
 
 			$args = array(
 				'post_type'  => array( 'aoc-record' ),
 				'meta_query' => array(
 					array(
-						'key'   => '1P_md5',
+						'key'   => $POV_ID . 'P_md5',
 						'value' => $file_md5,
 					),
 				),
 			);
 			$identical_rec = get_posts($args);
 			if (isset($identical_rec[0])) {
-				return $file_obj->error = 'Already exists: <a href="' . get_permalink($identical_rec[0]->ID) . '">See existed Record</a>';
+				$file_obj->error = 'Already exists: <a href="' . get_permalink($identical_rec[0]->ID) . '">See existed Record</a>';
+				return $file_obj;
 			}
 
 			$salt = '';
@@ -387,19 +396,8 @@ class RecordUploadHandler extends UploadHandler {
 				}
 				imagepng( $r->generateResearches(), $research_path . $names[1] );
 
-				$qr_path = $this->get_upload_path( null, 'qrcode' );
-				if ( ! is_dir( $qr_path ) ) {
-					mkdir( $qr_path, $this->options['mkdir_mode'], true );
-				}
-				require 'phpqrcode/qrlib.php';
-				//processing form input
-				//remember to sanitize user input in real-life solution !!!
-				//available value: L, M, Q, H
-				$errorCorrectionLevel = 'Q';
-				$matrixPointSize      = 5;
-				QRcode::png( get_permalink( $record_id ), $qr_path . $names[1], $errorCorrectionLevel, $matrixPointSize, 2 );
-
-				$r->getOutput()['images'] = array(
+				$raw_output = $r->getOutput();
+                $raw_output['images'] = array(
 					'qrcode' => $this->get_download_url($names[1], 'qrcode'),
 					'map' => $this->get_download_url($names[1], 'map'),
 					'research' => $this->get_download_url($names[1], 'research')
@@ -407,24 +405,39 @@ class RecordUploadHandler extends UploadHandler {
 
 				// Create a new host game (a de facto custom type post in wordpress)
 				// and update $record_id
+                // Consider Trashed post!!!!
 				$host_game_attr = array(
 					'post_title' => $names[0],
 					'post_status'  => 'publish',
-					'guid'         => $host_md5,
 					'post_type'    => 'aoc-record',
-					'post_content' => json_encode( $r->getOutput(), JSON_UNESCAPED_UNICODE ),
+					'post_content' => json_encode( $raw_output, JSON_UNESCAPED_UNICODE ),
 					'meta_input'   => array(
-						$names[2] => $file_md5
+						$names[2] => $file_md5,
+						'host_md5' => $host_md5,
+                        $names[3] => $this->get_download_url($names[0], 'mgx')
 					),
 				);
 				$created_id     = wp_insert_post( $host_game_attr );
 				$record_id      = $created_id == 0 ? - 1 : $created_id;
+
+                $qr_path = $this->get_upload_path( null, 'qrcode' );
+                if ( ! is_dir( $qr_path ) ) {
+                    mkdir( $qr_path, $this->options['mkdir_mode'], true );
+                }
+                require 'phpqrcode/qrlib.php';
+                //processing form input
+                //remember to sanitize user input in real-life solution !!!
+                //available value: L, M, Q, H
+                $errorCorrectionLevel = 'Q';
+                $matrixPointSize      = 5;
+                QRcode::png( get_permalink( $record_id ), $qr_path . $names[1], $errorCorrectionLevel, $matrixPointSize, 2 );
 			} else {
 				$record_id = $host_game->ID;
 				$host_game_attr = array(
 					'ID' => $record_id,
 					'meta_input'   => array(
-						$names[2] => $host_md5,
+						$names[2] => $file_md5,
+                        $names[3] => $this->get_download_url($names[0], 'mgx')
 					),
 				);
 				wp_insert_post( $host_game_attr );
@@ -432,8 +445,9 @@ class RecordUploadHandler extends UploadHandler {
 		}
 
 		$name = isset( $rec_name ) ? $rec_name : $name;
+        $host_url = get_permalink($record_id);
 
-		return parent::handle_file_upload( $uploaded_file, $name, $size, $type, $error, $index, $content_range );
+		return parent::handle_file_upload( $uploaded_file, $name, $size, $type, $error, $index, $content_range, $host_url );
 	}
 }
 
@@ -629,11 +643,11 @@ if ( ! function_exists( 'create_record_type' ) ) {
 		$labels = array(
 			'name'                  => _x( 'AoC Records', 'Post Type General Name', 'mgx-uploader' ),
 			'singular_name'         => _x( 'AoC Record', 'Post Type Singular Name', 'mgx-uploader' ),
-			'menu_name'             => __( 'Post Types', 'mgx-uploader' ),
-			'name_admin_bar'        => __( 'Post Type', 'mgx-uploader' ),
+			'menu_name'             => __( 'AoC Records', 'mgx-uploader' ),
+			'name_admin_bar'        => __( 'AoC Records', 'mgx-uploader' ),
 			'archives'              => __( 'Item Archives', 'mgx-uploader' ),
 			'parent_item_colon'     => __( 'Parent Item:', 'mgx-uploader' ),
-			'all_items'             => __( 'All Items', 'mgx-uploader' ),
+			'all_items'             => __( 'All Records', 'mgx-uploader' ),
 			'add_new_item'          => __( 'Add New Item', 'mgx-uploader' ),
 			'add_new'               => __( 'Add New', 'mgx-uploader' ),
 			'new_item'              => __( 'New Item', 'mgx-uploader' ),

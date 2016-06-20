@@ -2519,7 +2519,7 @@ class RecAnalyst
         foreach ($this->playersByIndex as $player) {
             $player->getCivString();
         }
-        return array(
+        $raw_data = array(
             'version'      => $this->gameInfo->getGameVersionString(),
             'nVSn'         => $this->gameInfo->getPlayersString(),
             'speed'        => $this->gameSettings->getGameSpeedString(),
@@ -2544,5 +2544,7 @@ class RecAnalyst
             'ingameChat'   => $this->ingameChat,
             'units'         => $this->units, 
         );
+
+        return $raw_data;
     }
 }
