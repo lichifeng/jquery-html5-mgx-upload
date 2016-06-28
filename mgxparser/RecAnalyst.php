@@ -25,6 +25,8 @@
  *    description.
  ************************************************************************* */
 
+
+
 /**
  * Defines RecAnalyst class.
  *
@@ -52,13 +54,13 @@ class RecAnalyst
 
     /**
      * Internal stream containing header information.
-     * @var string
+     * @var MemoryStream
      */
     protected $headerStream;
 
     /**
      * Internal stream containing body information.
-     * @var string
+     * @var MemoryStream
      */
     protected $bodyStream;
 
@@ -103,7 +105,7 @@ class RecAnalyst
 
     /**
      * List of teams in the game.
-     * @var TeamList
+     * @var Team
      */
     public $teams;
 
@@ -281,7 +283,7 @@ class RecAnalyst
     {
         if (empty($input)) {
             throw new RecAnalystException(
-                'No file has been specified for analyzing',
+                __('No file has been specified for analyzing', 'mgxhub'),
                 RecAnalystException::FILE_NOT_SPECIFIED
             );
         }
@@ -307,7 +309,7 @@ class RecAnalyst
             $this->isMgz = false;
         } else {
             throw new RecAnalystException(
-                'Wrong file extension, file format is not supported',
+                __('Wrong file extension, file format is not supported', 'mgxhub'),
                 RecAnalystException::FILEFORMAT_NOT_SUPPORTED
             );
         }
@@ -322,7 +324,7 @@ class RecAnalyst
         }
         if (($packed_data = fread($fp, 4)) === false || strlen($packed_data) < 4) {
             throw new RecAnalystException(
-                'Unable to read the header length',
+                __('Unable to read the header length', 'mgxhub'),
                 RecAnalystException::HEADERLEN_READERROR
             );
         }
@@ -330,7 +332,7 @@ class RecAnalyst
         $this->_headerLen = $unpacked_data[1];
         if (!$this->_headerLen) {
             throw new RecAnalystException(
-                'Header length is zero',
+                __('Header length is zero', 'mgxhub'),
                 RecAnalystException::EMPTY_HEADER
             );
         }

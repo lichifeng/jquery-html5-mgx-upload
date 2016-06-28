@@ -125,7 +125,7 @@ class GameSettings
 
     /**
      * Victory settings.
-     * @var Victory
+     * @var VictorySettings
      */
     public $victory;
 

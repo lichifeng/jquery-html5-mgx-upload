@@ -89,10 +89,12 @@ class Config
      * @var bool
      */
     public $showPositions;
-    
-    //Add by lichifeng <lichifeng.com>
-    public $researchfontFile;
-    
+
+    /**
+     * Encoding for strings in record file
+     * added 2016.6.20 by lichifeng.com
+     * @var string
+     */
     public $stringEncoding;
 
     /**
@@ -118,7 +120,6 @@ class Config
         $this->researchFAColor = array(0x5c, 0xb8, 0x5c, 0x00); // green
         $this->researchCAColor = array(0x42, 0x8b, 0xca, 0x00); // blue
         $this->researchIAColor = array(0xf0, 0xad, 0x4e, 0x00); // orangy
-        $this->researchfontFile = $this->resourcesDir . 'STXIHEI.TTF';
     }
 
 }
